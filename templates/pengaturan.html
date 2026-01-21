@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+{% block title %}Pengaturan Akun{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Pengaturan</h3>
+        <p class="text-muted small">Kelola informasi TPQ, keamanan, dan data.</p>
+    </div>
+
+    <!-- 1. KONFIGURASI SEKOLAH -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-success-subtle">
+        <div class="card-body p-4">
+            <h6 class="fw-bold mb-3 text-success"><i class="fa-solid fa-school me-2"></i>Konfigurasi Lembaga</h6>
+            <form action="{{ url_for('update_sekolah') }}" method="POST">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold text-muted">Nama TPQ</label>
+                        <input type="text" name="nama_tpq" class="form-control" value="{{ config_tpq.nama_tpq }}" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label small fw-bold text-muted">Alamat Lengkap</label>
+                        <input type="text" name="alamat_tpq" class="form-control" value="{{ config_tpq.alamat_tpq }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold text-muted">Target (Ayat/Bln)</label>
+                        <input type="number" name="target_bulanan" class="form-control" value="{{ config_tpq.target_bulanan }}" required>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-success px-4"><i class="fa-solid fa-save me-2"></i>Simpan</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. AREA BACKUP & RESTORE (KHUSUS ADMIN) -->
+    {% if current_user.role == 'admin' %}
+    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-warning bg-opacity-10">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Backup & Restore Database</h6>
+                    <p class="text-muted small mb-0">Simpan data ke file JSON atau pulihkan data dari file.</p>
+                </div>
+            </div>
+            
+            <div class="row align-items-end g-3">
+                <div class="col-md-6 border-end">
+                    <label class="form-label small fw-bold text-muted">Simpan Data Saat Ini</label>
+                    <a href="{{ url_for('backup_db') }}" class="btn btn-outline-dark w-100">
+                        <i class="fa-solid fa-download me-2"></i>Download Backup (.json)
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <form action="{{ url_for('restore_db') }}" method="POST" enctype="multipart/form-data" onsubmit="return confirm('PERINGATAN: Restore akan MENGHAPUS semua data saat ini dan menggantinya dengan data dari file backup. Lanjutkan?');">
+                        <label class="form-label small fw-bold text-muted">Pulihkan Data (Restore)</label>
+                        <div class="input-group">
+                            <input type="file" name="file_backup" class="form-control" accept=".json" required>
+                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-upload me-2"></i>Restore</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- 3. GANTI PROFIL -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold"><i class="fa-solid fa-user-gear me-2 text-primary"></i>Edit Profil Pribadi</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('update_profil') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Username</label>
+                            <input type="text" class="form-control bg-light" value="{{ current_user.username }}" disabled readonly>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Nama Lengkap</label>
+                            <input type="text" name="nama" class="form-control" value="{{ current_user.nama }}" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-3">Simpan Profil</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. GANTI PASSWORD -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                    <h6 class="fw-bold"><i class="fa-solid fa-lock me-2 text-danger"></i>Ganti Password</h6>
+                </div>
+                <div class="card-body p-4">
+                    <form action="{{ url_for('update_password') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Password Lama</label>
+                            <input type="password" name="password_lama" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Password Baru</label>
+                            <input type="password" name="password_baru" class="form-control" minlength="6" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">Konfirmasi Password</label>
+                            <input type="password" name="konfirmasi_password" class="form-control" minlength="6" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100 rounded-3">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

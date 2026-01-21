@@ -1,0 +1,195 @@
+{% extends "layout.html" %}
+{% block title %}Laporan Perkembangan{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Filter -->
+    <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center mb-4 gap-3">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">Laporan Perkembangan</h2>
+            <p class="text-muted mb-0">Monitor target dan riwayat hafalan santri.</p>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <!-- Filter Form -->
+            <form action="{{ url_for('halaman_laporan') }}" method="GET" class="d-flex gap-2 bg-white p-2 rounded-3 shadow-sm border">
+                <!-- Pilih Santri -->
+                <select name="santri_id" class="form-select border-0 bg-light" style="min-width: 150px;" onchange="this.form.submit()">
+                    <option value="">-- Pilih Santri --</option>
+                    {% for s in semua_santri %}
+                    <option value="{{ s.id }}" {% if santri_terpilih and santri_terpilih.id == s.id %}selected{% endif %}>
+                        {{ s.nama }}
+                    </option>
+                    {% endfor %}
+                </select>
+                
+                <!-- Pilih Bulan -->
+                <select name="bulan" class="form-select border-0 bg-light" style="width: 130px;" onchange="this.form.submit()">
+                    {% set nama_bulan = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] %}
+                    {% for i in range(1, 13) %}
+                    <option value="{{ i }}" {% if bulan_pilih == i %}selected{% endif %}>{{ nama_bulan[i] }}</option>
+                    {% endfor %}
+                </select>
+
+                <!-- Pilih Tahun -->
+                <select name="tahun" class="form-select border-0 bg-light" style="width: 100px;" onchange="this.form.submit()">
+                    <option value="2025" {% if tahun_pilih == 2025 %}selected{% endif %}>2025</option>
+                    <option value="2026" {% if tahun_pilih == 2026 %}selected{% endif %}>2026</option>
+                    <option value="2027" {% if tahun_pilih == 2027 %}selected{% endif %}>2027</option>
+                </select>
+            </form>
+
+            <!-- TOMBOL EXCEL (REKAP GLOBAL) - FITUR BARU -->
+            <a href="{{ url_for('download_excel', bulan=bulan_pilih, tahun=tahun_pilih) }}" class="btn btn-success shadow-sm" title="Download Rekap Bulanan (Semua Santri)">
+                <i class="fa-solid fa-file-excel me-2"></i>Rekap Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- TOMBOL DOWNLOAD PDF (INDIVIDUAL) -->
+    {% if santri_terpilih %}
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{{ url_for('download_pdf', santri_id=santri_terpilih.id, bulan=bulan_pilih, tahun=tahun_pilih) }}" 
+           class="btn btn-danger shadow-sm">
+            <i class="fa-solid fa-file-pdf me-2"></i> Laporan PDF ({{ santri_terpilih.nama }})
+        </a>
+    </div>
+    {% endif %}
+
+    {% if santri_terpilih %}
+        <!-- DASHBOARD STATISTIK -->
+        <div class="row g-4 mb-4">
+            <!-- Kartu Total Ayat -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-success text-white overflow-hidden position-relative">
+                    <div class="card-body p-4 position-relative z-1">
+                        <h6 class="text-white-50 text-uppercase fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 1px;">Hafalan Bulan Ini</h6>
+                        <h2 class="display-5 fw-bold mb-3">{{ statistik.total_ayat }} <span class="fs-6 fw-normal">Ayat</span></h2>
+                        <hr class="border-white opacity-25">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small opacity-75">Total Akumulasi:</span>
+                            <span class="fw-bold fs-5">{{ statistik.total_global }} Ayat</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-quran position-absolute text-white opacity-25" style="font-size: 8rem; right: -20px; bottom: -20px;"></i>
+                </div>
+            </div>
+
+            <!-- Kartu Target & Progress -->
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4 d-flex flex-column justify-content-center">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <div>
+                                <h6 class="text-uppercase fw-bold text-muted small mb-1">Target Bulanan</h6>
+                                <h4 class="fw-bold text-dark mb-0">{{ statistik.persentase }}% <span class="text-muted fw-normal fs-6">Tercapai</span></h4>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-light text-dark border">{{ statistik.total_ayat }} / {{ statistik.target }} Ayat</span>
+                            </div>
+                        </div>
+                        <!-- Progress Bar (Dengan CSS Variable) -->
+                        <div class="progress" style="height: 25px; border-radius: 12px;">
+                            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="--lebar-progress: {{ statistik.persentase }}%; width: var(--lebar-progress);" 
+                                 aria-valuenow="{{ statistik.persentase }}" aria-valuemin="0" aria-valuemax="100">
+                                 {{ statistik.persentase }}%
+                            </div>
+                        </div>
+                        <div class="mt-3 text-muted small">
+                            {% if statistik.sisa > 0 %}
+                            <i class="fa-solid fa-arrow-trend-up me-1 text-warning"></i> Semangat! Kurang <strong>{{ statistik.sisa }} ayat</strong> lagi untuk mencapai target bulan ini.
+                            {% else %}
+                            <i class="fa-solid fa-medal me-1 text-success"></i> MasyaAllah! Target bulan ini sudah tercapai.
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABEL RIWAYAT SETORAN -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom py-3">
+                <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-ul me-2 text-success"></i>Riwayat Setoran ({{ nama_bulan[bulan_pilih] }} {{ tahun_pilih }})</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Hari, Tanggal</th>
+                            <th>Jam</th>
+                            <th>Hafalan (Surat & Ayat)</th>
+                            <th>Jml Ayat</th>
+                            <th>Kualitas</th>
+                            <th>Catatan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in data_laporan %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark" id="hari-{{ s.id }}">...</div>
+                                <div class="small text-muted" id="tgl-{{ s.id }}">...</div>
+                                <script>
+                                    (function() {
+                                        var dateStr = "{{ s.tanggal }}"; 
+                                        var isoDate = dateStr.replace(" ", "T");
+                                        var dateObj = new Date(isoDate);
+                                        var optionsHari = { weekday: 'long' };
+                                        var optionsTgl = { day: 'numeric', month: 'long', year: 'numeric' };
+                                        var hariEl = document.getElementById('hari-{{ s.id }}');
+                                        var tglEl = document.getElementById('tgl-{{ s.id }}');
+                                        if (hariEl) hariEl.innerText = dateObj.toLocaleDateString('id-ID', optionsHari);
+                                        if (tglEl) tglEl.innerText = dateObj.toLocaleDateString('id-ID', optionsTgl);
+                                    })();
+                                </script>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ s.tanggal.strftime('%H:%M') }}</span></td>
+                            <td>
+                                <div class="fw-semibold">{{ s.surat }}</div>
+                                <div class="small text-muted">Ayat {{ s.ayat_awal }} - {{ s.ayat_akhir }}</div>
+                            </td>
+                            <td class="fw-bold text-success">+{{ s.ayat_akhir - s.ayat_awal + 1 }}</td>
+                            <td>
+                                {% if s.kualitas == 'A' %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Mumtaz (A)</span>
+                                {% elif s.kualitas == 'B' %}
+                                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Jayyid (B)</span>
+                                {% else %}
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Mengulang (C)</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted small fst-italic">{{ s.catatan or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-regular fa-folder-open fs-1 mb-3 opacity-50"></i>
+                                <p>Belum ada data setoran di bulan ini.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- TAMPILAN KOSONG -->
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 text-center">
+                <div class="card border-0 shadow-sm rounded-4 p-5">
+                    <div class="mb-4 text-success opacity-25">
+                        <i class="fa-solid fa-chart-pie" style="font-size: 5rem;"></i>
+                    </div>
+                    <h4>Pilih Santri Terlebih Dahulu</h4>
+                    <p class="text-muted">Atau gunakan tombol <strong class="text-success">Rekap Excel</strong> di atas untuk mendownload data seluruh santri di bulan ini.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

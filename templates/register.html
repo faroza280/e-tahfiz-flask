@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar - E-Tahfizh</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Background Gradient Modern (Sedikit beda warna biar fresh) */
+            background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-register {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            overflow: hidden;
+            /* Animasi Masuk dari Atas */
+            animation: fadeInDown 0.8s ease-out;
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-control:focus {
+            border-color: #0f766e;
+            box-shadow: 0 0 0 0.25rem rgba(15, 118, 110, 0.25);
+        }
+        .icon-eye {
+            cursor: pointer;
+            color: #6c757d;
+        }
+        .icon-eye:hover { color: #0f766e; }
+        .btn-dark {
+            background-color: #134e4a;
+            border: none;
+        }
+        .btn-dark:hover {
+            background-color: #0f766e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="card card-register border-0">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h3 class="fw-bold text-dark">Buat Akun</h3>
+                            <p class="text-muted small">Bergabung menjadi pengajar E-Tahfizh</p>
+                        </div>
+
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} small py-2 fade show shadow-sm border-0" role="alert">
+                                        <i class="fa-solid fa-circle-info me-1"></i> {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form action="{{ url_for('register') }}" method="POST">
+                            <!-- Nama Lengkap -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-secondary">Nama Lengkap</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-id-card text-muted"></i></span>
+                                    <input type="text" name="nama" class="form-control bg-light border-start-0 ps-0" placeholder="Contoh: Ustadz Fulan" required>
+                                </div>
+                            </div>
+
+                            <!-- Username -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold small text-secondary">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                                    <input type="text" name="username" class="form-control bg-light border-start-0 ps-0" placeholder="Username unik" required>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold small text-secondary">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                                    <input type="password" name="password" id="regPass" class="form-control bg-light border-start-0 border-end-0 ps-0" placeholder="Buat password kuat" required>
+                                    <!-- Ikon Mata -->
+                                    <span class="input-group-text bg-light border-start-0 icon-eye" onclick="togglePassword()">
+                                        <i class="fa-solid fa-eye-slash" id="toggleIcon"></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-dark w-100 py-2 fw-bold shadow-sm rounded-pill">DAFTAR AKUN</button>
+                        </form>
+                        
+                        <div class="text-center mt-4 small">
+                            Sudah punya akun? <a href="{{ url_for('login') }}" class="text-decoration-none fw-bold text-success">Masuk di sini</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Toggle Password -->
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('regPass');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            }
+        }
+    </script>
+</body>
+</html>

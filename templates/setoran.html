@@ -1,0 +1,261 @@
+{% extends "layout.html" %}
+{% block title %}Input Setoran{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">Input Hafalan</h2>
+            <p class="text-muted">Isi data setoran santri hari ini.</p>
+        </div>
+        <!-- FITUR JAM REALTIME -->
+        <div class="d-none d-md-flex align-items-center gap-2 bg-white text-success px-4 py-2 rounded-pill shadow-sm small fw-semibold border">
+            <i class="fa-regular fa-clock"></i> 
+            <span id="jamDigital">Memuat waktu...</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- KOLOM KIRI: FORM INPUT -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <form action="{{ url_for('halaman_setoran') }}" method="POST" autocomplete="off">
+                        
+                        <!-- Pilih Santri -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Nama Santri</label>
+                            <select id="santriSelect" name="santriSelect" class="form-select form-select-lg" required onchange="ambilDataSantri()">
+                                <option value="" selected disabled>-- Pilih Santri --</option>
+                                {% for santri in semua_santri %}
+                                <option value="{{ santri.id }}">{{ santri.nama }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Juz & Surat -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Juz / Jilid</label>
+                                <select id="juzSelect" name="juzSelect" class="form-select" required>
+                                    <option value="" selected disabled>-- Pilih Juz --</option>
+                                    <!-- Diisi otomatis oleh JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Surat</label>
+                                <select id="suratSelect" name="suratSelect" class="form-select" required>
+                                    <option value="" selected disabled>-- Pilih Surat --</option>
+                                    <!-- Diisi otomatis oleh JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Ayat -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Ayat Awal</label>
+                                <input type="number" name="ayatAwal" class="form-control" placeholder="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Ayat Akhir</label>
+                                <input type="number" name="ayatAkhir" class="form-control" placeholder="10" required>
+                            </div>
+                        </div>
+
+                        <!-- Kualitas Hafalan -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium d-block mb-2">Kualitas</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="kualitas" id="kA" value="A" checked>
+                                <label class="btn btn-outline-success p-3 flex-fill" for="kA">
+                                    <div class="fw-bold fs-5">A</div><div class="small">Mumtaz</div>
+                                </label>
+                                <input type="radio" class="btn-check" name="kualitas" id="kB" value="B">
+                                <label class="btn btn-outline-warning p-3 flex-fill" for="kB">
+                                    <div class="fw-bold fs-5">B</div><div class="small">Jayyid</div>
+                                </label>
+                                <input type="radio" class="btn-check" name="kualitas" id="kC" value="C">
+                                <label class="btn btn-outline-danger p-3 flex-fill" for="kC">
+                                    <div class="fw-bold fs-5">C</div><div class="small">Mengulang</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Catatan -->
+                        <div class="mb-4">
+                            <textarea name="catatanInput" class="form-control" rows="2" placeholder="Catatan khusus..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-lg w-100 shadow-sm">
+                            <i class="fa-solid fa-save me-2"></i> Simpan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: INFO SANTRI & RIWAYAT -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4 position-relative overflow-hidden text-center">
+                    <!-- Hiasan Background -->
+                    <div class="position-absolute top-0 end-0 bg-success-subtle rounded-circle" style="width: 100px; height: 100px; margin-top: -30px; margin-right: -30px; opacity: 0.5;"></div>
+
+                    <!-- AREA FOTO PROFIL -->
+                    <div class="mx-auto mb-3 position-relative" style="width: 100px; height: 100px;">
+                        <!-- Default Placeholder -->
+                        <div id="fotoPlaceholder" class="w-100 h-100 bg-secondary-subtle rounded-circle d-flex align-items-center justify-content-center text-secondary">
+                            <i class="fa-solid fa-user fs-1"></i>
+                        </div>
+                        <!-- Foto Asli -->
+                        <img id="fotoAsli" src="" class="w-100 h-100 rounded-circle object-fit-cover border border-4 border-white shadow-sm d-none" alt="Foto Santri">
+                    </div>
+
+                    <h4 class="h5 fw-bold text-dark mb-1" id="labelNama">...</h4>
+                    <p class="text-muted small mb-3" id="labelKelas">Pilih santri untuk detail</p>
+
+                    <div id="detailStats" class="d-none">
+                        <hr class="border-secondary-subtle opacity-25">
+                        <div class="d-flex justify-content-between text-start small mb-2">
+                            <span class="text-muted">Total Hafalan</span>
+                            <span class="fw-bold text-success" id="valTotal">0 Ayat</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-start small">
+                            <span class="text-muted">Terakhir Setor</span>
+                            <span class="fw-bold text-dark" id="valTerakhir">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List Setoran Terkini (DENGAN TOMBOL HAPUS) -->
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3">SETORAN TERKINI</h6>
+                    
+                    <div class="vstack gap-3 pe-2" style="max-height: 400px; overflow-y: auto;">
+                        {% if not setoran_terkini %}
+                        <p class="text-muted small text-center py-3">Belum ada riwayat.</p>
+                        {% endif %}
+
+                        {% for s in setoran_terkini %}
+                        <div class="d-flex gap-3 align-items-center border-bottom pb-2">
+                            <!-- Nilai -->
+                            <div class="rounded-3 d-flex align-items-center justify-content-center fw-bold small 
+                                {% if s.kualitas == 'A' %}bg-success-subtle text-success{% elif s.kualitas == 'B' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %}" 
+                                style="width: 35px; height: 35px;">{{ s.kualitas }}</div>
+                            
+                            <!-- Info -->
+                            <div class="flex-grow-1 overflow-hidden">
+                                <div class="fw-bold small text-dark text-truncate">{{ s.santri.nama }}</div>
+                                <div class="text-muted x-small" style="font-size: 0.75rem;">{{ s.surat }}: {{ s.ayat_awal }}-{{ s.ayat_akhir }}</div>
+                            </div>
+                            
+                            <!-- Jam & Tombol Hapus -->
+                            <div class="text-end d-flex flex-column align-items-end">
+                                <div class="text-muted x-small mb-1" style="font-size: 0.7rem;">{{ s.tanggal.strftime('%H:%M') }}</div>
+                                
+                                <!-- FORM HAPUS SETORAN -->
+                                <form action="{{ url_for('hapus_setoran', id=s.id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setoran ini?');">
+                                    <button type="submit" class="btn btn-link text-danger p-0 shadow-none border-0" title="Hapus Setoran" style="font-size: 0.8rem; text-decoration: none;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. JAM REALTIME
+    function updateJam() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        document.getElementById('jamDigital').innerText = now.toLocaleDateString('id-ID', options);
+    }
+    setInterval(updateJam, 1000);
+    updateJam();
+
+    // 2. ISI DROPDOWN
+    document.addEventListener('DOMContentLoaded', function() {
+        const juzSelect = document.getElementById('juzSelect');
+        const suratSelect = document.getElementById('suratSelect');
+
+        juzSelect.selectedIndex = 0;
+        suratSelect.selectedIndex = 0;
+
+        for (let i = 1; i <= 30; i++) {
+            let opt = document.createElement('option');
+            opt.value = "Juz " + i; opt.text = "Juz " + i;
+            juzSelect.add(opt);
+        }
+
+        const namaSurat = [
+            "Al-Fatihah", "Al-Baqarah", "Ali 'Imran", "An-Nisa'", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Taubah", "Yunus",
+            "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra'", "Al-Kahf", "Maryam", "Ta-Ha",
+            "Al-Anbiya'", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Asy-Syu'ara'", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum",
+            "Luqman", "As-Sajdah", "Al-Ahzab", "Saba'", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir",
+            "Fussilat", "Asy-Sura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf",
+            "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah",
+            "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij",
+            "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddathir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba'", "An-Nazi'at", "Abasa",
+            "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad",
+            "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat",
+            "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kauthar", "Al-Kafirun", "An-Nasr",
+            "Al-Lahab", "Al-Ikhlas", "Al-Falaq", "An-Nas"
+        ];
+        
+        namaSurat.forEach((s, i) => {
+            let opt = document.createElement('option');
+            opt.value = s; opt.text = (i+1) + ". " + s;
+            suratSelect.add(opt);
+        });
+    });
+
+    // 3. FUNGSI DATA SANTRI
+    async function ambilDataSantri() {
+        const id = document.getElementById('santriSelect').value;
+        const fotoPlaceholder = document.getElementById('fotoPlaceholder');
+        const fotoAsli = document.getElementById('fotoAsli');
+        const detailStats = document.getElementById('detailStats');
+
+        if (!id) {
+            document.getElementById('labelNama').innerText = "...";
+            document.getElementById('labelKelas').innerText = "Pilih santri untuk detail";
+            fotoPlaceholder.classList.remove('d-none');
+            fotoAsli.classList.add('d-none');
+            detailStats.classList.add('d-none');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/santri/' + id);
+            const data = await res.json();
+
+            document.getElementById('labelNama').innerText = data.nama;
+            document.getElementById('labelKelas').innerText = data.kelas;
+            document.getElementById('valTotal').innerText = data.total_hafalan + " Ayat";
+            document.getElementById('valTerakhir').innerText = data.terakhir_surat;
+            detailStats.classList.remove('d-none');
+
+            if (data.foto_url) {
+                fotoAsli.src = data.foto_url;
+                fotoAsli.classList.remove('d-none');
+                fotoPlaceholder.classList.add('d-none');
+            } else {
+                fotoAsli.classList.add('d-none');
+                fotoPlaceholder.classList.remove('d-none');
+            }
+        } catch (e) {
+            console.error("Error:", e);
+        }
+    }
+</script>
+{% endblock %}

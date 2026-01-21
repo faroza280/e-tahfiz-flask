@@ -1,0 +1,150 @@
+{% extends "layout.html" %}
+{% block title %}Profil Santri - {{ santri.nama }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header & Tombol Kembali -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{{ url_for('halaman_santri') }}" class="btn btn-light border rounded-circle shadow-sm" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+            <i class="fa-solid fa-arrow-left text-muted"></i>
+        </a>
+        <div>
+            <h3 class="fw-bold text-dark mb-0">Profil Santri</h3>
+            <p class="text-muted small mb-0">Detail data dan riwayat hafalan.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- KOLOM KIRI: KARTU PROFIL -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 text-center overflow-hidden">
+                <div class="card-body p-4">
+                    <!-- Foto Profil Besar -->
+                    <div class="mx-auto mb-3 position-relative" style="width: 120px; height: 120px;">
+                        {% if santri.foto %}
+                            <img src="{{ url_for('static', filename='uploads/' + santri.foto) }}" 
+                                 class="w-100 h-100 rounded-circle object-fit-cover border border-4 border-white shadow-sm">
+                        {% else %}
+                            <div class="w-100 h-100 bg-secondary-subtle rounded-circle d-flex align-items-center justify-content-center text-secondary border border-4 border-white shadow-sm">
+                                <i class="fa-solid fa-user fs-1"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-1">{{ santri.nama }}</h5>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill mb-3">
+                        {{ santri.kelas }}
+                    </span>
+
+                    <!-- EDIT HANYA UNTUK ADMIN -->
+                    {% if current_user.role == 'admin' %}
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <a href="{{ url_for('edit_santri', id=santri.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Edit Data
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <div class="text-start bg-light p-3 rounded-3 small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Status</span>
+                            {% if santri.status == 'Aktif' %}
+                                <span class="fw-bold text-success">Aktif</span>
+                            {% elif santri.status == 'Lulus' %}
+                                <span class="fw-bold text-primary">Lulus</span>
+                            {% else %}
+                                <span class="fw-bold text-secondary">Berhenti</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Wali Ustadz</span>
+                            <span class="fw-bold">{{ santri.ustadz.nama }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">ID Santri</span>
+                            <span class="fw-bold">#{{ santri.id }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kartu Statistik Kecil -->
+            <div class="card border-0 shadow-sm rounded-4 mt-3 bg-primary text-white">
+                <div class="card-body p-4 text-center">
+                    <h6 class="opacity-75 text-uppercase small ls-1 mb-1">Total Hafalan</h6>
+                    <h2 class="fw-bold mb-0">{{ total_ayat }} <span class="fs-6 fw-normal">Ayat</span></h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: TIMELINE RIWAYAT -->
+        <div class="col-md-8 col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i>Riwayat Setoran</h6>
+                    <span class="badge bg-light text-dark border">{{ riwayat|length }} Kali Setor</span>
+                </div>
+                <div class="card-body p-4">
+                    
+                    {% if riwayat %}
+                        <div class="timeline">
+                            {% for s in riwayat %}
+                            <div class="d-flex gap-3 mb-4 timeline-item position-relative">
+                                <!-- Garis Vertikal -->
+                                {% if not loop.last %}
+                                <div class="position-absolute bg-light" style="width: 2px; top: 40px; bottom: -20px; left: 24px; z-index: 0;"></div>
+                                {% endif %}
+
+                                <!-- Ikon Nilai -->
+                                <div class="position-relative z-1">
+                                    {% if s.kualitas == 'A' %}
+                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-weight: bold;">A</div>
+                                    {% elif s.kualitas == 'B' %}
+                                    <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-weight: bold;">B</div>
+                                    {% else %}
+                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 50px; height: 50px; font-weight: bold;">C</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Konten -->
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="fw-bold text-dark mb-0">{{ s.surat }} <span class="text-muted fw-normal ms-1">Ayat {{ s.ayat_awal }}-{{ s.ayat_akhir }}</span></h6>
+                                            <small class="text-muted">
+                                                <i class="fa-regular fa-calendar me-1"></i> {{ s.tanggal.strftime('%d %B %Y') }} &bull; {{ s.tanggal.strftime('%H:%M') }}
+                                            </small>
+                                        </div>
+                                        
+                                        <!-- HAPUS SETORAN: HANYA ADMIN ATAU PEMILIK DATA (USTADZ YBS) -->
+                                        {% if current_user.role == 'admin' or s.ustadz_id == current_user.id %}
+                                        <form action="{{ url_for('hapus_setoran', id=s.id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus setoran ini?');">
+                                            <button type="submit" class="btn btn-sm text-danger bg-danger-subtle rounded-circle p-0" style="width: 30px; height: 30px;" title="Hapus">
+                                                <i class="fa-solid fa-trash small"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if s.catatan %}
+                                    <div class="mt-2 bg-light p-2 rounded-3 border-start border-4 border-warning small fst-italic text-muted">
+                                        "{{ s.catatan }}"
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-regular fa-folder-open fs-1 mb-3 opacity-50"></i>
+                            <p>Belum ada riwayat hafalan.</p>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

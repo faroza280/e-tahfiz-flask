@@ -1,0 +1,132 @@
+{% extends "layout.html" %}
+{% block title %}Data Santri{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">Data Santri</h2>
+            <p class="text-muted mb-0">Kelola semua data santri.</p>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2">
+            <form action="{{ url_for('halaman_santri') }}" method="GET" class="d-flex gap-2">
+                <!-- Filter Status -->
+                <select name="status" class="form-select shadow-sm border" style="width: 130px;" onchange="this.form.submit()">
+                    <option value="Aktif" {% if status_pilih == 'Aktif' %}selected{% endif %}>Aktif</option>
+                    <option value="Lulus" {% if status_pilih == 'Lulus' %}selected{% endif %}>Lulus</option>
+                    <option value="Berhenti" {% if status_pilih == 'Berhenti' %}selected{% endif %}>Berhenti</option>
+                    <option value="Semua" {% if status_pilih == 'Semua' %}selected{% endif %}>Semua Data</option>
+                </select>
+
+                <!-- Filter Kelas -->
+                <select name="kelas" class="form-select shadow-sm border" style="width: 140px;" onchange="this.form.submit()">
+                    <option value="">Semua Kelas</option>
+                    {% for k in daftar_kelas %}
+                    <option value="{{ k }}" {% if kelas_pilih == k %}selected{% endif %}>{{ k }}</option>
+                    {% endfor %}
+                </select>
+
+                <div class="input-group shadow-sm">
+                    <input type="text" name="q" class="form-control" placeholder="Cari..." value="{{ request.args.get('q', '') }}">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </form>
+            
+            <!-- TOMBOL TAMBAH (HANYA ADMIN) -->
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('tambah_santri') }}" class="btn btn-success shadow-sm text-nowrap">
+                <i class="fa-solid fa-plus me-2"></i> Tambah
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="10%">Foto</th>
+                            <th>Nama Santri</th>
+                            <th>Kelas</th>
+                            <th>Status</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for santri in semua_santri %}
+                        <tr>
+                            <td class="fw-bold text-muted">{{ loop.index }}</td>
+                            <td>
+                                <div style="width: 45px; height: 45px;">
+                                    {% if santri.foto %}
+                                        <img src="{{ url_for('static', filename='uploads/' + santri.foto) }}" class="w-100 h-100 rounded-circle object-fit-cover border shadow-sm">
+                                    {% else %}
+                                        <div class="w-100 h-100 rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center text-secondary border"><i class="fa-solid fa-user"></i></div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="fw-medium text-dark">{{ santri.nama }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ santri.kelas }}</span></td>
+                            <td>
+                                {% if santri.status == 'Aktif' %}
+                                    <span class="badge bg-success rounded-pill">Aktif</span>
+                                {% elif santri.status == 'Lulus' %}
+                                    <span class="badge bg-primary rounded-pill">Alumni/Lulus</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">Berhenti</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <!-- Tombol Ganti Status (BISA ADMIN & USTADZ) -->
+                                <div class="dropdown d-inline">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Status
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <form action="{{ url_for('update_status_santri', id=santri.id) }}" method="POST">
+                                                <input type="hidden" name="status" value="Aktif">
+                                                <button type="submit" class="dropdown-item text-success"><i class="fa-solid fa-check me-2"></i>Aktifkan</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form action="{{ url_for('update_status_santri', id=santri.id) }}" method="POST">
+                                                <input type="hidden" name="status" value="Lulus">
+                                                <button type="submit" class="dropdown-item text-primary"><i class="fa-solid fa-graduation-cap me-2"></i>Lulus</button>
+                                            </form>
+                                        </li>
+                                        <li>
+                                            <form action="{{ url_for('update_status_santri', id=santri.id) }}" method="POST">
+                                                <input type="hidden" name="status" value="Berhenti">
+                                                <button type="submit" class="dropdown-item text-secondary"><i class="fa-solid fa-ban me-2"></i>Berhenti</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Tombol Detail (SEMUA BISA) -->
+                                <a href="{{ url_for('detail_santri', id=santri.id) }}" class="btn btn-sm btn-outline-info" title="Detail"><i class="fa-solid fa-eye"></i></a>
+                                
+                                <!-- Tombol Edit/Hapus (HANYA ADMIN) -->
+                                {% if current_user.role == 'admin' %}
+                                <a href="{{ url_for('edit_santri', id=santri.id) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <form action="{{ url_for('hapus_santri', id=santri.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus santri ini? Data hafalan dan foto juga akan terhapus permanen.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="6" class="text-center py-5 text-muted">Data tidak ditemukan.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

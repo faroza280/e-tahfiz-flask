@@ -1,0 +1,104 @@
+{% extends "layout.html" %} {% block title %}Prestasi Santri{% endblock %} {% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h3 fw-bold text-dark mb-1">Papan Prestasi</h2>
+      <p class="text-muted">Peringkat santri berdasarkan jumlah hafalan ayat.</p>
+    </div>
+    <div class="bg-white px-3 py-2 rounded-pill shadow-sm border small text-muted"><i class="fa-solid fa-trophy text-warning me-1"></i> Top Hafizh</div>
+  </div>
+
+  <!-- Statistik Ringkas (Optional Header Card) -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-4 text-white" style="background: linear-gradient(45deg, #4e73df, #224abe)">
+        <div class="card-body p-3 d-flex align-items-center">
+          <div class="bg-white bg-opacity-25 rounded-circle p-3 me-3">
+            <i class="fa-solid fa-medal fs-3"></i>
+          </div>
+          <div>
+            <h6 class="mb-0 opacity-75">Santri Teraktif</h6>
+            {% if leaderboard and leaderboard|length > 0 %}
+            <h5 class="fw-bold mb-0">{{ leaderboard[0].Santri.nama }}</h5>
+            {% else %}
+            <h5 class="fw-bold mb-0">-</h5>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABEL LEADERBOARD -->
+  <div class="card shadow-sm border-0 rounded-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-5"width="10%">Rank</th>
+              <th widht="15%">Foto</th>
+              <th >Nama Santri</th>
+              <th >Level</th>
+              <th class="text-end pe-4">Total Hafalan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in leaderboard %} {% set santri = item.Santri %} {% set skor = item.skor %}
+
+            <!-- Logika Level Sederhana di Template -->
+            {% set level_name = 'Pemula' %} {% set level_color = 'secondary' %} {% set level_icon = 'fa-seedling' %} {% if skor > 500 %} {% set level_name = 'Hafizh' %} {% set level_color = 'warning' %} {% set level_icon = 'fa-crown' %} {%
+            elif skor > 100 %} {% set level_name = 'Pejuang' %} {% set level_color = 'primary' %} {% set level_icon = 'fa-shield-halved' %} {% endif %}
+
+            <!-- Highlight 3 Besar dengan background kuning tipis -->
+            <tr class="{% if loop.index <= 3 %}bg-warning bg-opacity-10{% endif %}">
+              <td class="text-center fw-bold ps-4">
+                {% if loop.index == 1 %}
+                <i class="fa-solid fa-medal text-warning fs-3" title="Juara 1"></i>
+                {% elif loop.index == 2 %}
+                <i class="fa-solid fa-medal text-secondary fs-3" title="Juara 2"></i>
+                {% elif loop.index == 3 %}
+                <i class="fa-solid fa-medal fs-3" style="color: #cd7f32" title="Juara 3"></i>
+                {% else %}
+                <span class="text-muted text-opacity-50 fs-5 fw-bold">{{ loop.index }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <div style="width: 45px; height: 45px">
+                  {% if santri.foto %}
+                  <img src="{{ url_for('static', filename='uploads/' + santri.foto) }}" class="w-100 h-100 rounded-circle object-fit-cover border shadow-sm" alt="{{ santri.nama }}" />
+                  {% else %}
+                  <div class="w-100 h-100 rounded-circle bg-secondary-subtle d-flex align-items-center justify-content-center text-secondary border">
+                    <i class="fa-solid fa-user"></i>
+                  </div>
+                  {% endif %}
+                </div>
+              </td>
+              <td>
+                <div class="fw-bold text-dark">{{ santri.nama }}</div>
+                <div class="small text-muted">{{ santri.kelas }}</div>
+              </td>
+              <td>
+                <span class="badge bg-{{ level_color }} rounded-pill px-3 py-2 border border-{{ level_color }} bg-opacity-75 text-white shadow-sm"> <i class="fa-solid {{ level_icon }} me-1"></i> {{ level_name }} </span>
+              </td>
+              <td class="text-end pe-4">
+                <span class="fw-bold fs-5 text-success">{{ skor }}</span>
+                <small class="text-muted d-block" style="font-size: 0.7rem">Ayat</small>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted">
+                <i class="fa-solid fa-users-slash fs-1 mb-3 opacity-50"></i>
+                <p>Belum ada data prestasi.</p>
+                <small>Input setoran hafalan agar santri masuk ke leaderboard ini.</small>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

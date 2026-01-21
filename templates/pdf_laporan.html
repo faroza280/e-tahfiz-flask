@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Hafalan</title>
+    <style>
+        body { font-family: sans-serif; color: #333; line-height: 1.5; font-size: 12pt; }
+        
+        /* Header / Kop Surat */
+        .header { text-align: center; border-bottom: 2px solid #198754; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #198754; font-size: 20pt; text-transform: uppercase; }
+        .header p { margin: 2px 0; font-size: 10pt; color: #666; }
+        
+        /* Tabel Info & Data */
+        .info-table, .data-table { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+        .info-table td { padding: 4px; vertical-align: top; }
+        .label { font-weight: bold; width: 120px; }
+        
+        .data-table th, .data-table td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10pt; }
+        .data-table th { background-color: #f8f9fa; color: #198754; font-weight: bold; text-align: center; }
+        .center { text-align: center; }
+        
+        /* Badge Nilai */
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 8pt; font-weight: bold; color: white; }
+        .bg-A { background-color: #198754; } 
+        .bg-B { background-color: #ffc107; color: #000; } 
+        .bg-C { background-color: #dc3545; }
+        
+        /* Footer / Tanda Tangan */
+        .footer { margin-top: 30px; width: 100%; }
+        .ttd-box { width: 40%; float: right; text-align: center; }
+        .ttd-line { border-bottom: 1px solid #333; margin-top: 60px; width: 80%; margin-left: auto; margin-right: auto; }
+        
+        /* Ringkasan Box */
+        .summary { background-color: #f8f9fa; padding: 10px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- KOP SURAT DINAMIS -->
+    <div class="header">
+        <!-- Mengambil Nama TPQ dari Database -->
+        <h1>{{ config.nama_tpq }}</h1>
+        <p>Laporan Perkembangan Hafalan Al-Qur'an Santri</p>
+        <!-- Mengambil Alamat dari Database -->
+        <p>{{ config.alamat_tpq }}</p>
+    </div>
+
+    <!-- INFO SANTRI -->
+    <table class="info-table">
+        <tr>
+            <td class="label">Nama Santri</td>
+            <td>: <strong>{{ santri.nama }}</strong></td>
+            <td class="label">Periode</td>
+            <td>: {{ bulan_nama }} {{ tahun }}</td>
+        </tr>
+        <tr>
+            <td class="label">Kelas</td>
+            <td>: {{ santri.kelas }}</td>
+            <td class="label">Wali Ustadz</td>
+            <td>: {{ ustadz.nama }}</td>
+        </tr>
+    </table>
+
+    <!-- RINGKASAN -->
+    <div class="summary">
+        <strong>Ringkasan Bulan Ini:</strong><br>
+        Total Pertemuan: {{ total_hadir }} kali | Total Hafalan Baru: {{ total_ayat }} Ayat
+    </div>
+
+    <!-- TABEL DATA SETORAN -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="20%">Tanggal</th>
+                <th width="35%">Hafalan (Surat & Ayat)</th>
+                <th width="10%">Jml</th>
+                <th width="10%">Nilai</th>
+                <th width="20%">Catatan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in data %}
+            <tr>
+                <td class="center">{{ loop.index }}</td>
+                <td class="center">
+                    {{ s.tanggal.strftime('%d-%m-%Y') }}<br>
+                    <small>{{ s.tanggal.strftime('%H:%M') }}</small>
+                </td>
+                <td>
+                    <strong>{{ s.surat }}</strong><br>
+                    Ayat {{ s.ayat_awal }} - {{ s.ayat_akhir }}
+                </td>
+                <td class="center">+{{ s.ayat_akhir - s.ayat_awal + 1 }}</td>
+                <td class="center">
+                    <span class="badge bg-{{ s.kualitas }}">{{ s.kualitas }}</span>
+                </td>
+                <td><small>{{ s.catatan or '-' }}</small></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="center">Belum ada data setoran bulan ini.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- TANDA TANGAN -->
+    <div class="footer">
+        <div class="ttd-box">
+            <p>Mengetahui,<br>Wali Ustadz/Ustadzah</p>
+            <div class="ttd-line"></div>
+            <p><strong>{{ ustadz.nama }}</strong></p>
+        </div>
+    </div>
+
+</body>
+</html>

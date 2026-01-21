@@ -1,0 +1,216 @@
+{% extends "layout.html" %}
+{% block title %}Kelola Pengajar{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">Kelola Pengajar</h2>
+            <p class="text-muted mb-0">Manajemen akun Ustadz dan Admin.</p>
+        </div>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahUstadz">
+            <i class="fa-solid fa-user-plus me-2"></i> Tambah Akun
+        </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%">No</th>
+                            <th>Nama Lengkap</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th class="text-center">Jml Santri</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in semua_ustadz %}
+                        <tr>
+                            <td class="fw-bold text-muted">{{ loop.index }}</td>
+                            <td class="fw-bold">{{ u.nama }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ u.username }}</span></td>
+                            <td>
+                                {% if u.role == 'admin' %}
+                                    <span class="badge bg-danger">Admin</span>
+                                {% else %}
+                                    <span class="badge bg-info text-dark">Ustadz</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.status == 'Aktif' %}
+                                    <span class="badge bg-success rounded-pill">Aktif</span>
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">Nonaktif</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- KOLOM JUMLAH SANTRI (BISA DIKLIK) -->
+                            <td class="text-center">
+                                {% if u.santri|length > 0 %}
+                                    <!-- Tombol untuk melihat daftar santri yang nyangkut -->
+                                    <button type="button" class="btn btn-sm btn-warning text-dark border border-warning-subtle fw-bold" data-bs-toggle="modal" data-bs-target="#modalListSantri{{ u.id }}" title="Klik untuk lihat siapa saja santrinya">
+                                        {{ u.santri|length }} Orang <i class="fa-solid fa-circle-info ms-1"></i>
+                                    </button>
+
+                                    <!-- MODAL LIST SANTRI -->
+                                    <div class="modal fade" id="modalListSantri{{ u.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content text-start">
+                                                <div class="modal-header">
+                                                    <h6 class="modal-title fw-bold">Santri Binaan {{ u.nama }}</h6>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="alert alert-warning x-small mb-3">
+                                                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                                        Ustadz tidak bisa dihapus karena masih terhubung dengan santri berikut (meskipun statusnya Lulus/Berhenti):
+                                                    </div>
+                                                    <ul class="list-group list-group-flush small">
+                                                        {% for s in u.santri %}
+                                                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                            <div>
+                                                                <span class="fw-bold text-dark">{{ s.nama }}</span>
+                                                                <div class="text-muted x-small">{{ s.kelas }}</div>
+                                                            </div>
+                                                            {% if s.status == 'Aktif' %}
+                                                                <span class="badge bg-success">Aktif</span>
+                                                            {% else %}
+                                                                <span class="badge bg-secondary">{{ s.status }}</span>
+                                                            {% endif %}
+                                                        </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                    <div class="mt-3 text-end">
+                                                        <a href="{{ url_for('halaman_santri') }}" class="btn btn-sm btn-primary">Ke Data Santri</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end">
+                                <!-- Tombol Edit -->
+                                <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#modalEdit{{ u.id }}" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                
+                                <!-- Tombol Hapus -->
+                                {% if u.id != current_user.id %}
+                                    {% if u.santri|length > 0 %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled title="Masih ada santri terhubung">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    {% else %}
+                                        <form action="{{ url_for('hapus_ustadz', id=u.id) }}" method="POST" class="d-inline" onsubmit="return confirm('PERINGATAN: Menghapus akun ini permanen. Lanjutkan?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        <!-- MODAL EDIT -->
+                        <div class="modal fade" id="modalEdit{{ u.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fw-bold">Edit Akun</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <form action="{{ url_for('edit_ustadz', id=u.id) }}" method="POST">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Nama Lengkap</label>
+                                                <input type="text" name="nama" class="form-control" value="{{ u.nama }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Username</label>
+                                                <input type="text" name="username" class="form-control" value="{{ u.username }}" required>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label small fw-bold">Role</label>
+                                                    <select name="role" class="form-select">
+                                                        <option value="ustadz" {% if u.role == 'ustadz' %}selected{% endif %}>Ustadz</option>
+                                                        <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label small fw-bold">Status</label>
+                                                    <select name="status" class="form-select">
+                                                        <option value="Aktif" {% if u.status == 'Aktif' %}selected{% endif %}>Aktif</option>
+                                                        <option value="Nonaktif" {% if u.status != 'Aktif' %}selected{% endif %}>Nonaktif</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold text-danger">Reset Password (Opsional)</label>
+                                                <input type="password" name="password" class="form-control" placeholder="Isi jika ingin ganti password">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TAMBAH -->
+<div class="modal fade" id="modalTambahUstadz" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Tambah Akun Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('tambah_ustadz') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nama Lengkap</label>
+                        <input type="text" name="nama" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Password</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Role</label>
+                        <select name="role" class="form-select">
+                            <option value="ustadz">Ustadz (Pengajar)</option>
+                            <option value="admin">Administrator</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
